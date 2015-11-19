@@ -1,0 +1,10 @@
+﻿{
+  "Data": {
+    "DefaultConnection": {
+      "ConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=_CHANGE_ME;Trusted_Connection=True;"
+    }
+  },
+  "AppSetting": {
+     "redis": "192.168.5.125:6379"
+  }
+}
