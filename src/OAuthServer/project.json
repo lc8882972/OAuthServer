@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0-beta8",
+  "description": "OAuthServer Class Library",
+  "authors": [ "yAn" ],
+  "tags": [ "OAuth2." ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "Microsoft.AspNet.Authentication": "1.0.0-beta8",
+    "Newtonsoft.Json": "7.0.1"
+  },
+
+  "frameworks": {
+     "dnx451": { }
+  }
+}
