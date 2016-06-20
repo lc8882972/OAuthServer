@@ -10,7 +10,6 @@ using System.Web.Http;
 
 namespace Samples.Controllers
 {
-    [Route("api/[controller]")]
     public class OAuthController : ApiController
     {
         // GET: /api/oauth/auth?response_type=token&client_id=s6BhdRkqt3&state=xyz&redirect_uri=http://localhost:5000/hello.html

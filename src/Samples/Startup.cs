@@ -43,7 +43,8 @@ namespace Samples
             services.AddAuthorization();
 
             services.AddMvcCore();
-            
+            services.AddMvc();
+
         }
 
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
@@ -72,7 +73,7 @@ namespace Samples
 
             app.UseMvc(routes =>
             {
-                //routes.MapWebApiRoute("defaultapi", "api/{controller}/{action}/{id?}");
+                routes.MapWebApiRoute("defaultapi", "api/{controller}/{action}/{id?}");
             });
 
         }
