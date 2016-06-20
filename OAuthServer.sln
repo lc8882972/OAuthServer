@@ -7,6 +7,8 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "OAuthServer", "src\OAuthSer
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Samples", "src\Samples\Samples.xproj", "{7EB5A230-D892-400E-929B-655871E4634A}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "WebApplication1", "WebApplication1\WebApplication1.xproj", "{38B60EA5-A9EE-41B8-A49A-5C87C3E9C3F1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{7EB5A230-D892-400E-929B-655871E4634A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EB5A230-D892-400E-929B-655871E4634A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7EB5A230-D892-400E-929B-655871E4634A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38B60EA5-A9EE-41B8-A49A-5C87C3E9C3F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38B60EA5-A9EE-41B8-A49A-5C87C3E9C3F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38B60EA5-A9EE-41B8-A49A-5C87C3E9C3F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38B60EA5-A9EE-41B8-A49A-5C87C3E9C3F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

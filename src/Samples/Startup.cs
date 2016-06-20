@@ -70,10 +70,11 @@ namespace Samples
                 option.ClientId = "smaples";
             });
 
-            app.UseMvc(routes => {
-                routes.MapWebApiRoute("defaultapi", "api/{controller}/{action}/{id?}");
+            app.UseMvc(routes =>
+            {
+                //routes.MapWebApiRoute("defaultapi", "api/{controller}/{action}/{id?}");
             });
-            
+
         }
     }
 
