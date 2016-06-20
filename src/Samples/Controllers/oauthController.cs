@@ -30,11 +30,5 @@ namespace Samples.Controllers
         {
             return "value";
         }
-        [HttpGet]
-        public string gettoken()
-        {
-            return Request.RequestUri.ToString();
-        }
-
     }
 }
