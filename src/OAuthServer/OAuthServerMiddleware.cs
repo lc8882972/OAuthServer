@@ -1,30 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Http;
-using Microsoft.AspNet.DataProtection;
-using Microsoft.Framework.Logging;
-using Microsoft.Framework.WebEncoders;
-using Microsoft.Framework.OptionsModel;
-using Microsoft.AspNet.Authentication;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace OAuthServer
 {
-    // You may need to install the Microsoft.AspNet.Http.Abstractions package into your project
-    public class OAuthServerMiddleware<TOptions> : AuthenticationMiddleware<TOptions> where TOptions : OAuthServer.OAuthServerOptions, new()
+    // You may need to install the Microsoft.AspNetCore.Http.Abstractions package into your project
+    public class OAuthServerMiddleware : AuthenticationMiddleware<OAuthServerOptions>
     {
         public OAuthServerMiddleware(
               RequestDelegate next,
-              IDataProtectionProvider dataProtectionProvider,
+              IOptions<OAuthServerOptions> options,
               ILoggerFactory loggerFactory,
-              IUrlEncoder encoder,
-              TOptions options,
-              ConfigureOptions<TOptions> configureOptions = null)
+              UrlEncoder encoder,
+              IDataProtectionProvider dataProtectionProvider
+              )
         : base(next, options, loggerFactory, encoder)
         {
-            var dataProtector = dataProtectionProvider.CreateProtector(GetType().FullName, Options.AuthenticationScheme, "v1");
+            var provider = Options.DataProtectionProvider ?? dataProtectionProvider;
+            var dataProtector = provider.CreateProtector(typeof(OAuthServerMiddleware).FullName, Options.AuthenticationScheme, "v2");
 
             Options.TicketDataFormat = new TicketDataFormat(dataProtector);
 
@@ -34,9 +32,9 @@ namespace OAuthServer
             }
         }
 
-        protected override AuthenticationHandler<TOptions> CreateHandler()
+        protected override AuthenticationHandler<OAuthServerOptions> CreateHandler()
         {
-            return new OAuthServerHandler<TOptions>();
+            return new OAuthServerHandler();
         }
     }
 }

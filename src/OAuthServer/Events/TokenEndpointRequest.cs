@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNet.Http;
+﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +15,7 @@ namespace OAuthServer.Events
         /// Creates a new instance populated with values from the form encoded body parameters.
         /// </summary>
         /// <param name="parameters">Form encoded body parameters from a request.</param>
-        public TokenEndpointRequest(IReadableStringCollection parameters)
+        public TokenEndpointRequest(IFormCollection parameters)
         {
             if (parameters == null)
             {
@@ -71,7 +71,7 @@ namespace OAuthServer.Events
         /// <summary>
         /// The form encoded body parameters of the Token endpoint request
         /// </summary>
-        public IReadableStringCollection Parameters { get; private set; }
+        public IFormCollection Parameters { get; private set; }
 
         /// <summary>
         /// The "grant_type" parameter of the Token endpoint request. This parameter is required.

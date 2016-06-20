@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNet.Http;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace OAuthServer.Events
 {
@@ -16,7 +14,7 @@ namespace OAuthServer.Events
         /// Creates a new instance populated with values from the query string parameters.
         /// </summary>
         /// <param name="parameters">Query string parameters from a request.</param>
-        public AuthorizeEndpointRequest(IReadableStringCollection parameters)
+        public AuthorizeEndpointRequest(IQueryCollection parameters)
         {
             if (parameters == null)
             {

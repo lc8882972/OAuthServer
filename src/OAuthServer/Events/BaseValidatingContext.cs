@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNet.Http;
+﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace OAuthServer.Events
     {
         protected BaseValidatingContext(HttpContext context, TOptions optios):base(context,optios)
         {
-
+            
         }
         /// <summary>
         /// True if application code has called any of the Validate methods on this context.

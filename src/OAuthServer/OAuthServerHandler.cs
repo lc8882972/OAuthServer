@@ -1,28 +1,29 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Framework.Logging;
 using System.Text;
 using System.Globalization;
-using Microsoft.AspNet.Http.Features.Authentication;
-using Microsoft.AspNet.Http.Authentication;
-using System.IO;
+using Microsoft.AspNetCore.Http.Features.Authentication;
+using Microsoft.AspNetCore.Http.Authentication;
 using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
-using Microsoft.AspNet.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using OAuthServer.Events;
-using Microsoft.AspNet.WebUtilities;
 
 namespace OAuthServer
 {
-    public class OAuthServerHandler<TOptions> : AuthenticationHandler<TOptions> where TOptions : OAuthServerOptions
+    public class OAuthServerHandler : AuthenticationHandler<OAuthServerOptions> 
     {
                                
         private AuthorizeEndpointRequest _authorizeEndpointRequest;
         private OAuthServerValidateClientRedirectUriContext _clientContext;
         private AuthenticationTicket ticket;
 
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            throw new NotImplementedException();
+        }
 
         protected override Task HandleSignInAsync(SignInContext context)
         {
@@ -98,7 +99,7 @@ namespace OAuthServer
 
                 foreach (var key in returnParameter.Keys)
                 {
-                    location = Microsoft.AspNet.WebUtilities.QueryHelpers.AddQueryString(location, key, returnParameter[key]);
+                    location = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(location, key, returnParameter[key]);
                 }
                 Response.Redirect(location);
 
@@ -150,7 +151,11 @@ namespace OAuthServer
             throw new NotImplementedException();
         }
 
-        public async override Task<bool> InvokeAsync()
+        //public override Task<bool> HandleRequestAsync()
+        //{
+        //    return base.HandleRequestAsync();
+        //}
+        public async override Task<bool> HandleRequestAsync()
         {
             OAuthServerMatchEndpointContext matchContext = new OAuthServerMatchEndpointContext(Context, Options);
             if ( Options.AuthorizationEndpoint == Request.Path)
@@ -169,7 +174,7 @@ namespace OAuthServer
             }
             if (matchContext.IsAuthorizeEndpoint || matchContext.IsTokenEndpoint)
             {
-                if (!Options.AllowInsecureHttp && String.Equals(Request.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+                if (!Options.AllowInsecureHttp && String.Equals(Request.Scheme, "http", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -209,7 +214,7 @@ namespace OAuthServer
                     acceptableUri = false;
                 }
                 else if (!Options.AllowInsecureHttp &&
-                    String.Equals(validatingUri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+                    String.Equals(validatingUri.Scheme, "http", StringComparison.OrdinalIgnoreCase))
                 {
                     // The redirection endpoint SHOULD require the use of TLS
                     // http://tools.ietf.org/html/rfc6749#section-3.1.2.1
@@ -266,7 +271,7 @@ namespace OAuthServer
             // remove milliseconds in case they don't round-trip
             currentUtc = currentUtc.Subtract(TimeSpan.FromMilliseconds(currentUtc.Millisecond));
 
-            Microsoft.AspNet.Http.IFormCollection form = await Request.ReadFormAsync();
+            Microsoft.AspNetCore.Http.IFormCollection form = await Request.ReadFormAsync();
 
             var clientContext = new OAuthServerValidateClientAuthenticationContext(Context,Options,form);
 
@@ -342,7 +347,7 @@ namespace OAuthServer
 
             if (tokenEndpointContext.TokenIssued)
             {
-                ticket = new AuthenticationTicket(tokenEndpointContext.Principal, tokenEndpointContext.Properties, tokenEndpointContext.Options.AuthenticationScheme);
+                ticket = new AuthenticationTicket(tokenEndpointContext.Principal, tokenEndpointContext.Properties, this.Options.AuthenticationScheme);
             }
             else
             {
@@ -706,24 +711,25 @@ namespace OAuthServer
             }
 
             // redirect with error if client_id and redirect_uri have been validated
-            string location = Microsoft.AspNet.WebUtilities.QueryHelpers.AddQueryString(clientContext.RedirectUri, Constants.Parameters.Error, error);
+            string location = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(clientContext.RedirectUri, Constants.Parameters.Error, error);
             if (!string.IsNullOrEmpty(errorDescription))
             {
-                location = Microsoft.AspNet.WebUtilities.QueryHelpers.AddQueryString(location, Constants.Parameters.ErrorDescription, errorDescription);
+                location = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(location, Constants.Parameters.ErrorDescription, errorDescription);
             }
             if (!string.IsNullOrEmpty(errorUri))
             {
-                location = Microsoft.AspNet.WebUtilities.QueryHelpers.AddQueryString(location, Constants.Parameters.ErrorUri, errorUri);
+                location = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(location, Constants.Parameters.ErrorUri, errorUri);
             }
             Response.Redirect(location);
             // request is handled, does not pass on to application
             return Task.FromResult(true);
         }
 
-        protected override Task<AuthenticationTicket> HandleAuthenticateAsync()
-        {
-            throw new NotImplementedException();
-        }
+
+        //protected override Task<AuthenticationTicket> HandleAuthenticateAsync()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         private async Task<bool> SendErrorPageAsync(string error, string errorDescription, string errorUri)
         {
@@ -780,7 +786,10 @@ namespace OAuthServer
 
             public Appender Append(string name, string value)
             {
-                _sb.Append(_hasDelimiter ? '&' : _delimiter).Append(Uri.EscapeDataString(name)).Append('=').Append(Uri.EscapeDataString(value));
+                _sb.Append(_hasDelimiter ? '&' : _delimiter)
+                    .Append(Uri.EscapeDataString(name))
+                    .Append('=')
+                    .Append(Uri.EscapeDataString(value));
                 _hasDelimiter = true;
                 return this;
             }

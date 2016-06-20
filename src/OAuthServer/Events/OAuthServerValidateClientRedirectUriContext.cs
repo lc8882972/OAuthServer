@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Http;
+using Microsoft.AspNetCore.Http;
 
 namespace OAuthServer.Events
 {
@@ -29,6 +29,7 @@ namespace OAuthServer.Events
                 // Don't allow default validation when redirect_uri not provided with request
                 return false;
             }
+
             return base.Validated();
         }
 

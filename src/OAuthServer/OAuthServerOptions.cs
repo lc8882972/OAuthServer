@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNet.Http.Authentication;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.Authentication;
 using OAuthServer.Infrastructure;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace OAuthServer
 {
@@ -130,5 +132,11 @@ namespace OAuthServer
         /// 保存token
         /// </summary>
         public Infrastructure.IAuthenticationSessionStore SessionStore { get; set; }
+
+        /// <summary> 
+        /// If set this will be used by the CookieAuthenticationMiddleware for data protection. 
+        /// </summary> 
+        public IDataProtectionProvider DataProtectionProvider { get; set; }
+
     }
 }

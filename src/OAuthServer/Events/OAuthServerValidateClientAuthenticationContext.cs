@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Http;
+using Microsoft.AspNetCore.Http;
 
 namespace OAuthServer.Events
 {
@@ -18,7 +18,7 @@ namespace OAuthServer.Events
         public OAuthServerValidateClientAuthenticationContext(
             HttpContext context,
             OAuthServerOptions options,
-            IReadableStringCollection parameters)
+            IFormCollection parameters)
             : base(context, options, null)
         {
             Parameters = parameters;
@@ -27,7 +27,7 @@ namespace OAuthServer.Events
         /// <summary>
         /// Gets the set of form parameters from the request.
         /// </summary>
-        public IReadableStringCollection Parameters { get; private set; }
+        public IFormCollection Parameters { get; private set; }
 
         /// <summary>
         /// Sets the client id and marks the context as validated by the application.
@@ -52,7 +52,8 @@ namespace OAuthServer.Events
         {
             // Client Authentication http://tools.ietf.org/html/rfc6749#section-2.3
             // Client Authentication Password http://tools.ietf.org/html/rfc6749#section-2.3.1
-            Microsoft.Framework.Primitives.StringValues authorization ;
+
+            Microsoft.Extensions.Primitives.StringValues authorization;
             Request.Headers.TryGetValue("Authorization", out authorization);
             if (authorization.Count!=0 && authorization.Contains("Basic"))
             {

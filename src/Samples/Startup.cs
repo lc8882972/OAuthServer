@@ -2,43 +2,62 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Http;
-using Microsoft.Framework.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.DotNet.InternalAbstractions;
 using Samples.Middleware;
-using Microsoft.Framework.Logging;
-using Microsoft.Dnx.Runtime;
-using Microsoft.AspNet.Hosting;
-using Microsoft.Framework.Configuration;
 
 namespace Samples
 {
     public class Startup
     {
-        private IConfigurationRoot config_root;
-        public Startup(IHostingEnvironment hostEnv,IApplicationEnvironment appEnv,ILoggerFactory loggerFactory)
+        public IConfigurationRoot Configuration { get; }
+
+        public Startup(IHostingEnvironment env)
         {
-            var builder = new ConfigurationBuilder();
-            builder.SetBasePath(appEnv.ApplicationBasePath);
-            builder.AddJsonFile("config.json");
-            config_root = builder.Build();
-            string redis = config_root["AppSetting:redis"];
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("config.json", optional: true, reloadOnChange: true);
+                //.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
+
+            if (env.IsEnvironment("Development"))
+            {
+                // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
+                builder.AddApplicationInsightsSettings(developerMode: true);
+            }
+
+            builder.AddEnvironmentVariables();
+            Configuration = builder.Build();
         }
         // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddInstance<IConfigurationRoot>(config_root);
+            // Add framework services.
+            services.AddApplicationInsightsTelemetry(Configuration);
+            services.AddDataProtection();
             services.AddAuthentication();
             services.AddAuthorization();
-            services.AddCors();
+
             services.AddMvcCore();
             
         }
 
-        public void Configure(IApplicationBuilder app)
+        public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
         {
+            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+            loggerFactory.AddDebug();
+
+            app.UseApplicationInsightsRequestTelemetry();
+            app.UseApplicationInsightsExceptionTelemetry();
+
+            app.UseStaticFiles();
             app.UseTimeRecorderMiddleware();
-            app.UseOAuthServer("oauthserver",option=> {
+            app.UseOAuthServer("oauthserver", option =>
+            {
                 option.AuthenticationScheme = "oauthserver";
                 option.AuthorizationEndpoint = new PathString("/api/oauth/auth");
                 option.TokenEndpoint = new PathString("/api/oauth/token");
@@ -50,9 +69,7 @@ namespace Samples
                 option.AllowInsecureHttp = true;
                 option.ClientId = "smaples";
             });
-            // Add the platform handler to the request pipeline.
-            //app.UseIISPlatformHandler();
-            app.UseWebSockets();
+
             app.UseMvc(routes => {
                 routes.MapWebApiRoute("defaultapi", "api/{controller}/{action}/{id?}");
             });

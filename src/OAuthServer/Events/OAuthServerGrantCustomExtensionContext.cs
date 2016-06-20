@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Http;
+using Microsoft.AspNetCore.Http;
 
 namespace OAuthServer.Events
 {
@@ -21,7 +21,7 @@ namespace OAuthServer.Events
             OAuthServerOptions options,
             string clientId,
             string grantType,
-            IReadableStringCollection parameters)
+            IFormCollection parameters)
             : base(context, options, null)
         {
             ClientId = clientId;
@@ -42,6 +42,6 @@ namespace OAuthServer.Events
         /// <summary>
         /// Gets a list of additional parameters from the token request.
         /// </summary>
-        public IReadableStringCollection Parameters { get; private set; }
+        public IFormCollection Parameters { get; private set; }
     }
 }

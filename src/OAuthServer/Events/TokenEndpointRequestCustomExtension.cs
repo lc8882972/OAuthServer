@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNet.Http;
+﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +14,7 @@ namespace OAuthServer.Events
         /// <summary>
         /// The parameter information when the "grant_type" is unrecognized.
         /// </summary>
-        public IReadableStringCollection Parameters { get; set; }
+        public IFormCollection Parameters { get; set; }
     }
 
 }

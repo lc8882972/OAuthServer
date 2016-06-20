@@ -2,25 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Http;
-using Microsoft.AspNet.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
 
 namespace OAuthServer.Events
 {
      /// <summary> 
      /// Base class used for certain event contexts 
      /// </summary> 
-     public abstract class EndpointContext<TOptions> : BaseContext<TOptions> 
+     public abstract class EndpointContext<TOptions> : BaseContext
      { 
          /// <summary> 
          /// Creates an instance of this context 
          /// </summary> 
          protected EndpointContext(HttpContext context, TOptions options)
-             : base(context, options) 
-         { 
+             : base(context) 
+         {
+            Options = options;
          } 
- 
- 
+         
+        public TOptions Options { get; set; }
+
          /// <summary> 
          /// True if the request should not be processed further by other components. 
          /// </summary> 

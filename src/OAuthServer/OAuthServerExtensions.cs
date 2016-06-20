@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNet.Builder;
-using Microsoft.Framework.OptionsModel;
+using Microsoft.Extensions.Options;
 using OAuthServer;
 
-namespace Microsoft.AspNet.Builder
+namespace Microsoft.AspNetCore.Builder
 {
     public static class OAuthServerExtensions
     {
@@ -22,17 +18,17 @@ namespace Microsoft.AspNet.Builder
             {
                 throw new ArgumentNullException(nameof(app));
             }
-
+          
 
             if (configureOptions == null)
             {
                 throw new ArgumentNullException(nameof(configureOptions));
             }
+
+
             var options = new OAuthServerOptions();
-            if (configureOptions != null)
-            {
-                configureOptions(options);
-            }
+            configureOptions(options);
+            
             return app.UseOAuthServer(options);
 
         }
@@ -52,7 +48,7 @@ namespace Microsoft.AspNet.Builder
             {
                 throw new ArgumentNullException(nameof(options));
             }
-            return app.UseMiddleware<OAuthServerMiddleware<OAuthServerOptions>>(options);
+            return app.UseMiddleware<OAuthServerMiddleware>(Options.Create(options));
         }
     }
 }

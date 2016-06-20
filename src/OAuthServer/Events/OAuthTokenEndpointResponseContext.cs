@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Http;
-using Microsoft.AspNet.Http.Authentication;
-using Microsoft.AspNet.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Authentication;
+using Microsoft.AspNetCore.Authentication;
 
 namespace OAuthServer.Events
 {
-    public class OAuthTokenEndpointResponseContext: BaseContext<OAuthServerOptions>
+    public class OAuthTokenEndpointResponseContext: EndpointContext<OAuthServerOptions>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="OAuthTokenEndpointResponseContext"/> class
