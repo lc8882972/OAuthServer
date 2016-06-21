@@ -42,8 +42,13 @@ namespace Samples
             services.AddAuthentication();
             services.AddAuthorization();
 
-            services.AddMvcCore();
-            services.AddMvc();
+            services.AddMvcCore()
+                .AddAuthorization()
+                .AddDataAnnotations()
+                .AddFormatterMappings()
+                .AddJsonFormatters();
+
+            //services.AddMvc();
 
         }
 
