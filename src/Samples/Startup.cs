@@ -76,6 +76,12 @@ namespace Samples
                 option.ClientId = "smaples";
             });
 
+            app.UseSPAAuthentication(options => {
+                options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                options.LoginPath = new PathString("/api/login");
+                options.AuthenticationScheme = "SPA";
+                options.AutomaticAuthenticate = true;
+            });
             app.UseMvc(routes =>
             {
                 routes.MapWebApiRoute("defaultapi", "api/{controller}/{action}/{id?}");

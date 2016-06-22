@@ -22,7 +22,7 @@ namespace OAuthServer
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            throw new NotImplementedException();
+            return Task.FromResult(AuthenticateResult.Fail("Does not support authenticate"));
         }
 
         protected override Task HandleSignInAsync(SignInContext context)
@@ -189,8 +189,6 @@ namespace OAuthServer
                 }
             }
             return false;
-
-
         }
         public async Task<bool> InvokeAuthorizeEndpointAsync()
         {
