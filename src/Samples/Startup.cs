@@ -49,7 +49,8 @@ namespace Samples
                 .AddJsonFormatters();
 
             //services.AddMvc();
-
+            services.Configure<Hello>(a => { a.Say = "Tom"; });
+            
         }
 
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
@@ -90,4 +91,7 @@ namespace Samples
         }
     }
 
+    public class Hello {
+        public string Say;
+    }
 }
