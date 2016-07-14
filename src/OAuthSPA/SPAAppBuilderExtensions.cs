@@ -31,7 +31,7 @@ namespace Microsoft.AspNetCore.Builder
         }
 
         /// <summary>
-        /// Adds the <see cref="CookieAuthenticationMiddleware"/> middleware to the specified <see cref="IApplicationBuilder"/>, which enables cookie authentication capabilities.
+        /// Adds the <see cref="SPAAuthenticationMiddleware"/> middleware to the specified <see cref="IApplicationBuilder"/>, which enables cookie authentication capabilities.
         /// </summary>
         /// <param name="app">The <see cref="IApplicationBuilder"/> to add the middleware to.</param>
         /// <param name="options">A <see cref="SPAAuthenticationOptions"/> that specifies options for the middleware.</param>

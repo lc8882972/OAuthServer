@@ -49,7 +49,7 @@ namespace Samples
                 .AddJsonFormatters();
 
             //services.AddMvc();
-            services.Configure<Hello>(a => { a.Say = "Tom"; });
+            //services.Configure<Hello>(a => { a.Say = "Tom"; });
             
         }
 
@@ -91,7 +91,4 @@ namespace Samples
         }
     }
 
-    public class Hello {
-        public string Say;
-    }
 }

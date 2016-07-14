@@ -4257,6 +4257,7 @@
     "Microsoft.Bcl/1.1.9": {
       "sha512": "USQ55innJy8K+tAXvVa1O8dUTp2s7pmJ5cJj6Tl02HtGc2xBDj0P2QH5620HbGXIWKWYhydoeQF8Rm/JRDBGhw==",
       "type": "package",
+      "path": "Microsoft.Bcl/1.1.9",
       "files": [
         "License-Stable.rtf",
         "Microsoft.Bcl.1.1.9.nupkg.sha512",
@@ -4358,6 +4359,7 @@
     "Microsoft.Bcl.Build/1.0.14": {
       "sha512": "cDLKSvNvRa519hplsbSoYqO69TjdDIhfjtKUM0g20/nVROoWsGav9KCI9HtnGjLmdV1+TcUUDhbotcllibjPEA==",
       "type": "package",
+      "path": "Microsoft.Bcl.Build/1.0.14",
       "files": [
         "License-Stable.rtf",
         "Microsoft.Bcl.Build.1.0.14.nupkg.sha512",
@@ -4826,6 +4828,7 @@
     "Microsoft.Net.Http/2.2.22": {
       "sha512": "bqVLJ2UimlAEs2bn3y28lB1pmFRxuysv9pFyB0A86WEMYGYTfDyfjAGjm0fiaSRjlMNU1jVnp8Mxt8qe4OmpXQ==",
       "type": "package",
+      "path": "Microsoft.Net.Http/2.2.22",
       "files": [
         "License-Stable.rtf",
         "Microsoft.Net.Http.2.2.22.nupkg.sha512",

@@ -15,6 +15,7 @@ namespace Samples.Controllers
         [HttpGet]
         public string Index()
         {
+            Json();
             return "Home";
         }
     }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using OAuthSPA.Events;
+using Microsoft.Extensions.Options;
 
 namespace OAuthSPA
 {
@@ -15,7 +16,7 @@ namespace OAuthSPA
             IDataProtectionProvider dataProtectionProvider,
             ILoggerFactory loggerFactory,
             UrlEncoder urlEncoder,
-            SPAAuthenticationOptions options)
+            IOptions<SPAAuthenticationOptions> options)
             : base(next, options, loggerFactory, urlEncoder)
         {
             if (next == null)
