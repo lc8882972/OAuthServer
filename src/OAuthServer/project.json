@@ -17,15 +17,11 @@
 
   "frameworks": {
     "netstandard1.6": {
-<<<<<<< HEAD
       "imports": [
         "dnxcore50",
         "dotnet5.6",
         "portable-net45+win8"
       ]
-=======
-      "imports": "dnxcore50"
->>>>>>> ce770c9d80ad2f03b22aef95d13eefa49c1b80de
     }
   }
 }
