@@ -126,15 +126,18 @@ namespace OAuthServer
         /// </summary>
         public PathString FormPostEndpoint { get; set; }
 
+        /// <summary>
+        /// Format AuthenticationTicket token
+        /// </summary>
         public ISecureDataFormat<AuthenticationTicket> TicketDataFormat { get; set; }
 
         /// <summary>
-        /// 保存token
+        /// Save token
         /// </summary>
         public Infrastructure.IAuthenticationSessionStore SessionStore { get; set; }
 
         /// <summary> 
-        /// If set this will be used by the CookieAuthenticationMiddleware for data protection. 
+        /// If set this will be used by the OauthServerMiddleware for data protection. 
         /// </summary> 
         public IDataProtectionProvider DataProtectionProvider { get; set; }
 

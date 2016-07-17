@@ -9,5 +9,8 @@
   },
   "AppSetting": {
     "redis": "192.168.5.125:6379"
-  }
+  },
+ 
+  "urls":  "http://localhost:5000" 
+  
 }
