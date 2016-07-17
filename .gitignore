@@ -246,3 +246,6 @@ ModelManifest.xml
 
 bin/
 obj/
+src/Samples/project.lock.json
+src/OAuthServer/project.lock.json
+nuget/nuget.exe

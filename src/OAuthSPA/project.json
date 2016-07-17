@@ -1,5 +1,5 @@
 ﻿{
-  "version": "1.0.0-rc2",
+  "version": "1.0.0",
   "description": "OAuthSPAServer Class Library",
   "authors": [ "yAn" ],
   "packOptions": {
@@ -10,14 +10,18 @@
     }
   },
   "dependencies": {
-    "NETStandard.Library": "1.5.0-rc2-24027",
-    "Microsoft.AspNetCore.Authentication": "1.0.0-rc2-final",
+    "NETStandard.Library": "1.6.0",
+    "Microsoft.AspNetCore.Authentication": "1.0.0",
     "Newtonsoft.Json": "8.0.3"
   },
 
   "frameworks": {
-    "netstandard1.5": {
-      "imports": "dnxcore50"
+    "netstandard1.6": {
+      "imports": [
+        "dnxcore50",
+        "dotnet5.6",
+        "portable-net45+win8" 
+      ]
     }
   }
 }
