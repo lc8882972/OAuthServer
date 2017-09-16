@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +18,10 @@ namespace OAuthServer.Events
         /// </summary>
         public OAuthServerEndpointContext(
             HttpContext context,
+            AuthenticationScheme scheme,
             OAuthServerOptions options,
             AuthorizeEndpointRequest authorizeRequest)
-            : base(context, options)
+            : base(context, scheme, options)
         {
             AuthorizeRequest = authorizeRequest;
         }

@@ -4,18 +4,31 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
 using System.Globalization;
-using Microsoft.AspNetCore.Http.Features.Authentication;
-using Microsoft.AspNetCore.Http.Authentication;
 using System.Diagnostics.CodeAnalysis;
-using Newtonsoft.Json;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using OAuthServer.Events;
 
 namespace OAuthServer
 {
-    public class OAuthServerHandler : AuthenticationHandler<OAuthServerOptions> 
+    public class OAuthServerHandler
+        : AuthenticationHandler<OAuthServerOptions>,
+        IAuthenticationSignInHandler,
+        IAuthenticationRequestHandler
+
     {
-                               
+        public OAuthServerHandler(
+            IOptionsMonitor<OAuthServerOptions> options,
+            ILoggerFactory logger,
+            UrlEncoder encoder,
+            ISystemClock clock) : base(options, logger, encoder, clock)
+        {
+            
+        }
         private AuthorizeEndpointRequest _authorizeEndpointRequest;
         private OAuthServerValidateClientRedirectUriContext _clientContext;
         private AuthenticationTicket ticket;
@@ -24,35 +37,68 @@ namespace OAuthServer
         {
             return Task.FromResult(AuthenticateResult.Fail("Does not support authenticate"));
         }
-
-        protected override Task HandleSignInAsync(SignInContext context)
+        /// <summary>
+        /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
+        /// If it is not provided a default instance is supplied which does nothing when the methods are called.
+        /// </summary>
+        protected new OAuthServerEvents Events
         {
-            AuthenticationProperties properties = new AuthenticationProperties();
+            get { return (OAuthServerEvents)base.Events; }
+            set { base.Events = value; }
+        }
+
+        /// <summary>
+        /// Creates a new instance of the events instance.
+        /// </summary>
+        /// <returns>A new instance of the events instance.</returns>
+        protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new OAuthServerEvents());
+
+        /// <summary>
+        /// Called after options/events have been initialized for the handler to finish initializing itself.
+        /// </summary>
+        /// <returns>A task</returns>
+        protected override Task InitializeHandlerAsync()
+        {
+            Context.Response.OnStarting(FinishResponseAsync);
+            return Task.CompletedTask;
+        }
+
+        public virtual Task SignInAsync(ClaimsPrincipal user, AuthenticationProperties properties)
+        {
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            properties = properties ?? new AuthenticationProperties();
+
             DateTimeOffset currentUtc = Options.SystemClock.UtcNow;
             properties.IssuedUtc = currentUtc;
             properties.ExpiresUtc = currentUtc.Add(Options.AuthorizationCodeExpireTimeSpan);
 
             // associate client_id with all subsequent tickets
             properties.Items[Constants.Extra.ClientId] = _authorizeEndpointRequest.ClientId;
-
+            OAuthServerSignedInContext signInContext = new OAuthServerSignedInContext(
+                Context,
+                Scheme,
+                user,
+                properties,
+                Options);
             if (!string.IsNullOrEmpty(_authorizeEndpointRequest.RedirectUri))
             {
                 // keep original request parameter for later comparison
                 properties.RedirectUri = _authorizeEndpointRequest.RedirectUri;
             }
-            ticket =new AuthenticationTicket(context.Principal,properties, Options.AuthenticationScheme);
 
-            return Task.FromResult<AuthenticationTicket>(ticket);
+            ticket = new AuthenticationTicket(signInContext.Principal, properties, Scheme.Name);
+
+            return Task.CompletedTask;
         }
 
-        protected override Task HandleSignOutAsync(SignOutContext context)
-        {
-            throw new NotImplementedException();
-        }
-        protected override async Task FinishResponseAsync()
+        protected async Task FinishResponseAsync()
         {
             // only successful results of an authorize request are altered
-            if (_clientContext == null || _authorizeEndpointRequest == null || Response.StatusCode != 200 || ticket==null)
+            if (_clientContext == null || _authorizeEndpointRequest == null || Response.StatusCode != 200 || ticket == null)
             {
                 return;
             }
@@ -64,15 +110,27 @@ namespace OAuthServer
             {
                 if (string.IsNullOrEmpty(token))
                 {
-                    var errorContext = new OAuthValidateAuthorizeRequestContext(Context, Options, _authorizeEndpointRequest, _clientContext);
+                    var errorContext = new OAuthValidateAuthorizeRequestContext(
+                        Context, 
+                        Scheme,
+                        Options, 
+                        _authorizeEndpointRequest, 
+                        _clientContext);
                     errorContext.SetError(Constants.Errors.UnsupportedResponseType);
                     await SendErrorRedirectAsync(_clientContext, errorContext);
                     return;
                 }
 
-                var authResponseContext = new OAuthServerEndpointResponseContext(Context,Options, ticket, _authorizeEndpointRequest, null,token);
+                var authResponseContext = new OAuthServerEndpointResponseContext(
+                    Context, 
+                    Scheme,
+                    Options,
+                    ticket, 
+                    _authorizeEndpointRequest, 
+                    null, 
+                    token);
 
-                await Options.Events.AuthorizationEndpointResponse(authResponseContext);
+                await Events.AuthorizationEndpointResponse(authResponseContext);
 
                 foreach (var parameter in authResponseContext.AdditionalResponseParameters)
                 {
@@ -114,7 +172,7 @@ namespace OAuthServer
 
                 // associate client_id with access token
                 ticket.Properties.Items[Constants.Extra.ClientId] = _authorizeEndpointRequest.ClientId;
-             
+
                 DateTimeOffset? accessTokenExpiresUtc = ticket.Properties.ExpiresUtc;
 
                 var appender = new Appender(location, '#');
@@ -129,14 +187,17 @@ namespace OAuthServer
                 {
                     appender.Append(Constants.Parameters.State, _authorizeEndpointRequest.State);
                 }
-                var authResponseContext = new OAuthServerEndpointResponseContext( Context, Options,ticket,_authorizeEndpointRequest,token, null);
+                var authResponseContext = new OAuthServerEndpointResponseContext(
+                    Context, 
+                    Scheme,
+                    Options,
+                    ticket, 
+                    _authorizeEndpointRequest, 
+                    token, 
+                    null);
 
-                await Options.Events.AuthorizationEndpointResponse(authResponseContext);
+                await Events.AuthorizationEndpointResponse(authResponseContext);
 
-                if (Options.SessionStore != null)
-                {
-                   await  Options.SessionStore.StoreAsync(ticket);
-                }
                 foreach (var parameter in authResponseContext.AdditionalResponseParameters)
                 {
                     appender.Append(parameter.Key, parameter.Value.ToString());
@@ -144,21 +205,12 @@ namespace OAuthServer
 
                 Response.Redirect(appender.ToString());
             }
-          
-        }
-        protected override Task<bool> HandleUnauthorizedAsync(ChallengeContext context)
-        {
-            throw new NotImplementedException();
         }
 
-        //public override Task<bool> HandleRequestAsync()
-        //{
-        //    return base.HandleRequestAsync();
-        //}
-        public async override Task<bool> HandleRequestAsync()
+        public async Task<bool> HandleRequestAsync()
         {
-            OAuthServerMatchEndpointContext matchContext = new OAuthServerMatchEndpointContext(Context, Options);
-            if ( Options.AuthorizationEndpoint == Request.Path)
+            OAuthServerMatchEndpointContext matchContext = new OAuthServerMatchEndpointContext(Context, Scheme, Options);
+            if (Options.AuthorizationEndpoint == Request.Path)
             {
                 matchContext.MatchesAuthorizeEndpoint();
             }
@@ -166,7 +218,7 @@ namespace OAuthServer
             {
                 matchContext.MatchesTokenEndpoint();
             }
-            await Options.Events.MatchEndpoint(matchContext);
+            await Events.MatchEndpoint(matchContext);
 
             if (matchContext.IsRequestCompleted)
             {
@@ -193,7 +245,7 @@ namespace OAuthServer
         public async Task<bool> InvokeAuthorizeEndpointAsync()
         {
             var authorizeRequest = new AuthorizeEndpointRequest(Request.Query);
-            var clientContext = new OAuthServerValidateClientRedirectUriContext( Context,Options,authorizeRequest.ClientId, authorizeRequest.RedirectUri);
+            var clientContext = new OAuthServerValidateClientRedirectUriContext(Context, Scheme, Options, authorizeRequest.ClientId, authorizeRequest.RedirectUri);
 
             if (!String.IsNullOrEmpty(authorizeRequest.RedirectUri))
             {
@@ -225,7 +277,7 @@ namespace OAuthServer
                 }
             }
 
-            await Options.Events.ValidateClientRedirectUri(clientContext);
+            await Events.ValidateClientRedirectUri(clientContext);
 
             if (!clientContext.IsValidated)
             {
@@ -233,7 +285,7 @@ namespace OAuthServer
             }
 
 
-            var validatingContext = new OAuthValidateAuthorizeRequestContext(Context, Options,authorizeRequest,clientContext);
+            var validatingContext = new OAuthValidateAuthorizeRequestContext(Context, Scheme, Options, authorizeRequest, clientContext);
             if (string.IsNullOrEmpty(authorizeRequest.ResponseType))
             {
                 validatingContext.SetError(Constants.Errors.InvalidRequest);
@@ -244,7 +296,7 @@ namespace OAuthServer
             }
             else
             {
-                await Options.Events.ValidateAuthorizeRequest(validatingContext);
+                await Events.ValidateAuthorizeRequest(validatingContext);
             }
 
             if (!validatingContext.IsValidated)
@@ -256,24 +308,24 @@ namespace OAuthServer
             _clientContext = clientContext;
             _authorizeEndpointRequest = authorizeRequest;
 
-            var authorizeEndpointContext = new OAuthServerEndpointContext(Context, Options, authorizeRequest);
+            var authorizeEndpointContext = new OAuthServerEndpointContext(Context, Scheme, Options, authorizeRequest);
 
-            await Options.Events.AuthorizeEndpoint(authorizeEndpointContext);
+            await Events.AuthorizeEndpoint(authorizeEndpointContext);
 
             return authorizeEndpointContext.IsRequestCompleted;
         }
-        public async  Task<bool> InvokeTokenEndpointAsync()
+        public async Task<bool> InvokeTokenEndpointAsync()
         {
-              
+
             DateTimeOffset currentUtc = Options.SystemClock.UtcNow;
             // remove milliseconds in case they don't round-trip
             currentUtc = currentUtc.Subtract(TimeSpan.FromMilliseconds(currentUtc.Millisecond));
 
             Microsoft.AspNetCore.Http.IFormCollection form = await Request.ReadFormAsync();
 
-            var clientContext = new OAuthServerValidateClientAuthenticationContext(Context,Options,form);
+            var clientContext = new OAuthServerValidateClientAuthenticationContext(Context, Scheme, Options, form);
 
-            await Options.Events.ValidateClientAuthentication(clientContext);
+            await Events.ValidateClientAuthentication(clientContext);
 
             if (!clientContext.IsValidated)
             {
@@ -288,7 +340,7 @@ namespace OAuthServer
 
             var tokenEndpointRequest = new TokenEndpointRequest(form);
 
-            var validatingContext = new OAuthServerValidateTokenRequestContext(Context, Options, tokenEndpointRequest, clientContext);
+            var validatingContext = new OAuthServerValidateTokenRequestContext(Context, Scheme, Options, tokenEndpointRequest, clientContext);
 
             AuthenticationTicket ticket = null;
             if (tokenEndpointRequest.IsAuthorizationCodeGrantType)
@@ -339,13 +391,13 @@ namespace OAuthServer
             ticket.Properties.IssuedUtc = currentUtc;
             ticket.Properties.ExpiresUtc = currentUtc.Add(Options.AccessTokenExpireTimeSpan);
 
-            var tokenEndpointContext = new OAuthServerTokenEndpointContext( Context,Options,ticket,tokenEndpointRequest);
+            var tokenEndpointContext = new OAuthServerTokenEndpointContext(Context, Scheme, Options, ticket, tokenEndpointRequest);
 
-            await Options.Events.TokenEndpoint(tokenEndpointContext);
+            await Events.TokenEndpoint(tokenEndpointContext);
 
             if (tokenEndpointContext.TokenIssued)
             {
-                ticket = new AuthenticationTicket(tokenEndpointContext.Principal, tokenEndpointContext.Properties, this.Options.AuthenticationScheme);
+                ticket = new AuthenticationTicket(tokenEndpointContext.Principal, tokenEndpointContext.Properties, Scheme.Name);
             }
             else
             {
@@ -355,7 +407,12 @@ namespace OAuthServer
                 return false;
             }
 
-            var accessTokenContext = new AuthenticationTokenCreateContext(Context,Options.AccessTokenFormat,ticket);
+            var accessTokenContext = new AuthenticationTokenCreateContext(
+                Context, 
+                Scheme,
+                Options,
+                Options.AccessTokenFormat, 
+                ticket);
 
             await Options.AccessTokenProvider.CreateAsync(accessTokenContext);
 
@@ -368,20 +425,24 @@ namespace OAuthServer
 
             var refreshTokenCreateContext = new AuthenticationTokenCreateContext(
                 Context,
+                Scheme,
+                Options,
                 Options.RefreshTokenFormat,
                 accessTokenContext.Ticket);
+
             await Options.RefreshTokenProvider.CreateAsync(refreshTokenCreateContext);
             string refreshToken = refreshTokenCreateContext.Token;
 
             var tokenEndpointResponseContext = new OAuthTokenEndpointResponseContext(
                 Context,
+                Scheme,
                 Options,
                 ticket,
                 tokenEndpointRequest,
                 accessToken,
                 tokenEndpointContext.AdditionalResponseParameters);
 
-            await Options.Events.TokenEndpointResponse(tokenEndpointResponseContext);
+            await Events.TokenEndpointResponse(tokenEndpointResponseContext);
 
             var memory = new MemoryStream();
             byte[] body;
@@ -421,9 +482,9 @@ namespace OAuthServer
             Response.Headers.Add("Pragma", "no-cache");
             Response.Headers.Add("Expires", "-1");
             Response.ContentLength = memory.ToArray().Length;
-            await Response.Body.WriteAsync(body,0,body.Length);
+            await Response.Body.WriteAsync(body, 0, body.Length);
             return true;
-    }
+        }
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "The MemoryStream is Disposed by the StreamWriter")]
         private Task SendErrorAsJsonAsync(BaseValidatingContext<OAuthServer.OAuthServerOptions> validatingContext)
         {
@@ -458,14 +519,16 @@ namespace OAuthServer
             Response.Headers.Add("Pragma", "no-cache");
             Response.Headers.Add("Expires", "-1");
             Response.Headers.Add("Content-Length", body.Length.ToString(CultureInfo.InvariantCulture));
-            return Response.Body.WriteAsync(body,0,body.Length);
+            return Response.Body.WriteAsync(body, 0, body.Length);
         }
-        private async Task<AuthenticationTicket> InvokeTokenEndpointAuthorizationCodeGrantAsync(OAuthServerValidateTokenRequestContext validatingContext,DateTimeOffset currentUtc)
+        private async Task<AuthenticationTicket> InvokeTokenEndpointAuthorizationCodeGrantAsync(OAuthServerValidateTokenRequestContext validatingContext, DateTimeOffset currentUtc)
         {
             TokenEndpointRequest tokenEndpointRequest = validatingContext.TokenRequest;
 
             var authorizationCodeContext = new AuthenticationTokenReceiveContext(
                 Context,
+                Scheme,
+                Options,
                 Options.AuthorizationCodeFormat,
                 tokenEndpointRequest.AuthorizationCodeGrant.Code);
 
@@ -475,7 +538,7 @@ namespace OAuthServer
 
             if (ticket == null)
             {
-                //_logger.WriteError("invalid authorization code");
+                Logger.LogError("invalid authorization code");
                 validatingContext.SetError(Constants.Errors.InvalidGrant);
                 return null;
             }
@@ -483,7 +546,7 @@ namespace OAuthServer
             if (!ticket.Properties.ExpiresUtc.HasValue ||
                 ticket.Properties.ExpiresUtc < currentUtc)
             {
-                //_logger.WriteError("expired authorization code");
+                Logger.LogError("expired authorization code");
                 validatingContext.SetError(Constants.Errors.InvalidGrant);
                 return null;
             }
@@ -492,7 +555,7 @@ namespace OAuthServer
             if (!ticket.Properties.Items.TryGetValue(Constants.Extra.ClientId, out clientId) ||
                 !String.Equals(clientId, validatingContext.ClientContext.ClientId, StringComparison.Ordinal))
             {
-                //_logger.WriteError("authorization code does not contain matching client_id");
+                Logger.LogError("authorization code does not contain matching client_id");
                 validatingContext.SetError(Constants.Errors.InvalidGrant);
                 return null;
             }
@@ -503,20 +566,23 @@ namespace OAuthServer
                 ticket.Properties.Items.Remove(Constants.Extra.RedirectUri);
                 if (!String.Equals(redirectUri, tokenEndpointRequest.AuthorizationCodeGrant.RedirectUri, StringComparison.Ordinal))
                 {
-                    //_logger.WriteError("authorization code does not contain matching redirect_uri");
+                    Logger.LogError("authorization code does not contain matching redirect_uri");
                     validatingContext.SetError(Constants.Errors.InvalidGrant);
                     return null;
                 }
             }
 
-            await Options.Events.ValidateTokenRequest(validatingContext);
+            await Events.ValidateTokenRequest(validatingContext);
 
             var grantContext = new OAuthServerGrantAuthorizationCodeContext(
-                Context, Options, ticket);
+                Context,
+                Scheme,
+                Options, 
+                ticket);
 
             if (validatingContext.IsValidated)
             {
-                await Options.Events.GrantAuthorizationCode(grantContext);
+                await Events.GrantAuthorizationCode(grantContext);
             }
 
             return ReturnOutcome(
@@ -532,10 +598,11 @@ namespace OAuthServer
         {
             TokenEndpointRequest tokenEndpointRequest = validatingContext.TokenRequest;
 
-            await Options.Events.ValidateTokenRequest(validatingContext);
+            await Events.ValidateTokenRequest(validatingContext);
 
             var grantContext = new OAuthServerGrantResourceOwnerCredentialsContext(
                 Context,
+                Scheme,
                 Options,
                 validatingContext.ClientContext.ClientId,
                 tokenEndpointRequest.ResourceOwnerPasswordCredentialsGrant.UserName,
@@ -544,7 +611,7 @@ namespace OAuthServer
 
             if (validatingContext.IsValidated)
             {
-                await Options.Events.GrantResourceOwnerCredentials(grantContext);
+                await Events.GrantResourceOwnerCredentials(grantContext);
             }
 
             return ReturnOutcome(
@@ -560,7 +627,7 @@ namespace OAuthServer
         {
             TokenEndpointRequest tokenEndpointRequest = validatingContext.TokenRequest;
 
-            await Options.Events.ValidateTokenRequest(validatingContext);
+            await Events.ValidateTokenRequest(validatingContext);
             if (!validatingContext.IsValidated)
             {
                 return null;
@@ -568,11 +635,12 @@ namespace OAuthServer
 
             var grantContext = new OAuthServerGrantClientCredentialsContext(
                 Context,
+                Scheme,
                 Options,
                 validatingContext.ClientContext.ClientId,
                 tokenEndpointRequest.ClientCredentialsGrant.Scope);
 
-            await Options.Events.GrantClientCredentials(grantContext);
+            await Events.GrantClientCredentials(grantContext);
 
             return ReturnOutcome(
                 validatingContext,
@@ -589,6 +657,8 @@ namespace OAuthServer
 
             var refreshTokenContext = new AuthenticationTokenReceiveContext(
                 Context,
+                Scheme,
+                Options,
                 Options.RefreshTokenFormat,
                 tokenEndpointRequest.RefreshTokenGrant.RefreshToken);
 
@@ -598,7 +668,7 @@ namespace OAuthServer
 
             if (ticket == null)
             {
-                //_logger.WriteError("invalid refresh token");
+                Logger.LogError("invalid refresh token");
                 validatingContext.SetError(Constants.Errors.InvalidGrant);
                 return null;
             }
@@ -606,18 +676,23 @@ namespace OAuthServer
             if (!ticket.Properties.ExpiresUtc.HasValue ||
                 ticket.Properties.ExpiresUtc < currentUtc)
             {
-                //_logger.WriteError("expired refresh token");
+                Logger.LogError("expired refresh token");
                 validatingContext.SetError(Constants.Errors.InvalidGrant);
                 return null;
             }
 
-            await Options.Events.ValidateTokenRequest(validatingContext);
+            await Events.ValidateTokenRequest(validatingContext);
 
-            var grantContext = new OAuthServerGrantRefreshTokenContext(Context, Options, ticket, validatingContext.ClientContext.ClientId);
+            var grantContext = new OAuthServerGrantRefreshTokenContext(
+                Context, 
+                Scheme,
+                Options, 
+                ticket, 
+                validatingContext.ClientContext.ClientId);
 
             if (validatingContext.IsValidated)
             {
-                await Options.Events.GrantRefreshToken(grantContext);
+                await Events.GrantRefreshToken(grantContext);
             }
 
             return ReturnOutcome(
@@ -633,10 +708,11 @@ namespace OAuthServer
         {
             TokenEndpointRequest tokenEndpointRequest = validatingContext.TokenRequest;
 
-            await Options.Events.ValidateTokenRequest(validatingContext);
+            await Events.ValidateTokenRequest(validatingContext);
 
             var grantContext = new OAuthServerGrantCustomExtensionContext(
                 Context,
+                Scheme,
                 Options,
                 validatingContext.ClientContext.ClientId,
                 tokenEndpointRequest.GrantType,
@@ -644,7 +720,7 @@ namespace OAuthServer
 
             if (validatingContext.IsValidated)
             {
-                await Options.Events.GrantCustomExtension(grantContext);
+                await Events.GrantCustomExtension(grantContext);
             }
 
             return ReturnOutcome(
@@ -691,7 +767,7 @@ namespace OAuthServer
         }
 
 
-        private Task<bool> SendErrorRedirectAsync(OAuthServerValidateClientRedirectUriContext clientContext,BaseValidatingContext<OAuthServerOptions> validatingContext)
+        private Task<bool> SendErrorRedirectAsync(OAuthServerValidateClientRedirectUriContext clientContext, BaseValidatingContext<OAuthServerOptions> validatingContext)
         {
             if (clientContext == null)
             {
@@ -722,12 +798,6 @@ namespace OAuthServer
             // request is handled, does not pass on to application
             return Task.FromResult(true);
         }
-
-
-        //protected override Task<AuthenticationTicket> HandleAuthenticateAsync()
-        //{
-        //    throw new NotImplementedException();
-        //}
 
         private async Task<bool> SendErrorPageAsync(string error, string errorDescription, string errorUri)
         {
@@ -764,9 +834,14 @@ namespace OAuthServer
 
             Response.ContentType = "text/plain;charset=UTF-8";
             Response.Headers.Add("Content-Length", body.Length.ToString(CultureInfo.InvariantCulture));
-            await Response.Body.WriteAsync(body,0,body.Length);
+            await Response.Body.WriteAsync(body, 0, body.Length);
             // request is handled, does not pass on to application
             return true;
+        }
+
+        public Task SignOutAsync(AuthenticationProperties properties)
+        {
+            throw new NotImplementedException();
         }
 
         private class Appender
@@ -797,7 +872,5 @@ namespace OAuthServer
                 return _sb.ToString();
             }
         }
-
     }
-
 }

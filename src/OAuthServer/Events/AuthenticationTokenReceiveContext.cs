@@ -7,11 +7,17 @@ using Microsoft.AspNetCore.Authentication;
 
 namespace OAuthServer.Events
 {
-    public class AuthenticationTokenReceiveContext : BaseContext
+    public class AuthenticationTokenReceiveContext : BaseContext<OAuthServerOptions>
     {
         private readonly ISecureDataFormat<AuthenticationTicket> _secureDataFormat;
 
-        public AuthenticationTokenReceiveContext(HttpContext context, ISecureDataFormat<AuthenticationTicket> secureDataFormat, string token): base(context)
+        public AuthenticationTokenReceiveContext(
+            HttpContext context, 
+            AuthenticationScheme scheme, 
+            OAuthServerOptions options, 
+            ISecureDataFormat<AuthenticationTicket> secureDataFormat, 
+            string token)
+            : base(context, scheme, options)
         {
             if (secureDataFormat == null)
             {

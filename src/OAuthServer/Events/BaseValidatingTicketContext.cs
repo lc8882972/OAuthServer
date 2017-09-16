@@ -5,23 +5,24 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Authentication;
 
 namespace OAuthServer.Events
 {
     /// <summary>
     /// Base class used for certain event contexts
     /// </summary>
-    public abstract class BaseValidatingTicketContext<TOptions> : BaseValidatingContext<TOptions> where TOptions :OAuthServerOptions
+    public abstract class BaseValidatingTicketContext<TOptions> 
+        : BaseValidatingContext<TOptions> where TOptions : OAuthServerOptions
     {
         /// <summary>
         /// Initializes base class used for certain event contexts
         /// </summary>
         protected BaseValidatingTicketContext(
             HttpContext context,
+            AuthenticationScheme scheme,
             TOptions options,
             AuthenticationTicket ticket)
-            : base(context, options)
+            : base(context, scheme, options)
         {
             Ticket = ticket;
         }
@@ -54,7 +55,7 @@ namespace OAuthServer.Events
         public bool Validated(ClaimsPrincipal principal)
         {
             AuthenticationProperties properties = Ticket != null ? Ticket.Properties : new AuthenticationProperties();
-            return Validated(new AuthenticationTicket(principal, properties,Options.AuthenticationScheme));
+            return Validated(new AuthenticationTicket(principal, properties, Scheme.Name));
         }
     }
 }

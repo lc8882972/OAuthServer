@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http.Authentication;
-using OAuthServer.Infrastructure;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace OAuthServer
 {
-    public class OAuthServerOptions : AuthenticationOptions
+    public class OAuthServerOptions : AuthenticationSchemeOptions
     {
         public OAuthServerOptions()
         {
@@ -21,10 +16,7 @@ namespace OAuthServer
             SystemClock = new SystemClock();
             AllowInsecureHttp = true;
         }
-        /// <summary>
-        /// Gets or sets the <see cref="IOAuthServerAuthenticationNotifications"/> used to handle authentication events.
-        /// </summary>
-        public OAuthServer.Events.OAuthServerEvents Events { get; set; }
+
         /// <summary> 
         /// Gets or sets the provider-assigned client id. 
         /// </summary> 
@@ -41,14 +33,6 @@ namespace OAuthServer
         /// Gets or sets the URI the middleware will access to exchange the OAuth token.
         /// </summary>
         public PathString TokenEndpoint { get; set; }
-        /// <summary>
-        /// Get or sets the text that the user can display on a sign in user interface.
-        /// </summary>
-        public string DisplayName
-        {
-            get { return Description.DisplayName; }
-            set { Description.DisplayName = value; }
-        }
 
         public bool AllowInsecureHttp { get; set; }
         /// <summary>
@@ -130,11 +114,6 @@ namespace OAuthServer
         /// Format AuthenticationTicket token
         /// </summary>
         public ISecureDataFormat<AuthenticationTicket> TicketDataFormat { get; set; }
-
-        /// <summary>
-        /// Save token
-        /// </summary>
-        public Infrastructure.IAuthenticationSessionStore SessionStore { get; set; }
 
         /// <summary> 
         /// If set this will be used by the OauthServerMiddleware for data protection. 

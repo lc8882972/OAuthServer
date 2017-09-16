@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Authentication;
+//using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Authentication;
 
 namespace OAuthServer.Events
@@ -20,12 +20,13 @@ namespace OAuthServer.Events
         /// <param name="tokenEndpointRequest"></param>
         public OAuthTokenEndpointResponseContext(
             HttpContext context,
+            AuthenticationScheme scheme,
             OAuthServerOptions options,
             AuthenticationTicket ticket,
             TokenEndpointRequest tokenEndpointRequest,
             string accessToken,
             IDictionary<string, object> additionalResponseParameters)
-            : base(context, options)
+            : base(context, scheme, options)
         {
             if (ticket == null)
             {

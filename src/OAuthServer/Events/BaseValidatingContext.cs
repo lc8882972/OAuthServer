@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,11 +7,14 @@ using System.Threading.Tasks;
 
 namespace OAuthServer.Events
 {
-    public abstract class BaseValidatingContext<TOptions> : EndpointContext<TOptions>
+    public abstract class BaseValidatingContext<TOptions> : EndpointContext<TOptions> where TOptions: AuthenticationSchemeOptions
     {
-        protected BaseValidatingContext(HttpContext context, TOptions optios):base(context,optios)
+        protected BaseValidatingContext(
+            HttpContext context, 
+            AuthenticationScheme scheme, 
+            TOptions optios) : base(context, scheme, optios)
         {
-            
+
         }
         /// <summary>
         /// True if application code has called any of the Validate methods on this context.

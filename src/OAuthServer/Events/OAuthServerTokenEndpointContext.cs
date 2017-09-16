@@ -5,7 +5,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Authentication;
 
 namespace OAuthServer.Events
 {
@@ -20,10 +19,11 @@ namespace OAuthServer.Events
         /// <param name="tokenEndpointRequest"></param>
         public OAuthServerTokenEndpointContext(
             HttpContext context,
+            AuthenticationScheme scheme,
             OAuthServerOptions options,
             AuthenticationTicket ticket,
             TokenEndpointRequest tokenEndpointRequest)
-            : base(context, options)
+            : base(context, scheme, options)
         {
             if (ticket == null)
             {
