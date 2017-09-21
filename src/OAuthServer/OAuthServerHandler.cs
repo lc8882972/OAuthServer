@@ -35,7 +35,7 @@ namespace OAuthServer
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            return Task.FromResult(AuthenticateResult.Fail("Does not support authenticate"));
+            return Task.FromResult(AuthenticateResult.NoResult());
         }
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
@@ -72,7 +72,7 @@ namespace OAuthServer
 
             properties = properties ?? new AuthenticationProperties();
 
-            DateTimeOffset currentUtc = Options.SystemClock.UtcNow;
+            DateTimeOffset currentUtc = Clock.UtcNow;
             properties.IssuedUtc = currentUtc;
             properties.ExpiresUtc = currentUtc.Add(Options.AuthorizationCodeExpireTimeSpan);
 
@@ -105,7 +105,7 @@ namespace OAuthServer
             // only apply with signin of matching authentication type
             var returnParameter = new Dictionary<string, string>();
 
-            string token = Options.TicketDataFormat.Protect(ticket);
+            string token = Options.AccessTokenFormat.Protect(ticket);
             if (_authorizeEndpointRequest.IsAuthorizationCodeGrantType)
             {
                 if (string.IsNullOrEmpty(token))
@@ -166,7 +166,7 @@ namespace OAuthServer
             {
                 string location = _clientContext.RedirectUri;
 
-                DateTimeOffset currentUtc = Options.SystemClock.UtcNow;
+                DateTimeOffset currentUtc =Clock.UtcNow;
                 ticket.Properties.IssuedUtc = currentUtc;
                 ticket.Properties.ExpiresUtc = currentUtc.Add(Options.AccessTokenExpireTimeSpan);
 
@@ -317,7 +317,7 @@ namespace OAuthServer
         public async Task<bool> InvokeTokenEndpointAsync()
         {
 
-            DateTimeOffset currentUtc = Options.SystemClock.UtcNow;
+            DateTimeOffset currentUtc = Clock.UtcNow;
             // remove milliseconds in case they don't round-trip
             currentUtc = currentUtc.Subtract(TimeSpan.FromMilliseconds(currentUtc.Millisecond));
 
@@ -329,7 +329,7 @@ namespace OAuthServer
 
             if (!clientContext.IsValidated)
             {
-                //_logger.WriteError("clientID is not valid.");
+                Logger.LogWarning("clientID is not valid.");
                 if (!clientContext.HasError)
                 {
                     clientContext.SetError(Constants.Errors.InvalidClient);
@@ -414,8 +414,11 @@ namespace OAuthServer
                 Options.AccessTokenFormat, 
                 ticket);
 
-            await Options.AccessTokenProvider.CreateAsync(accessTokenContext);
-
+            if (Options.AccessTokenProvider != null)
+            {
+                await Options.AccessTokenProvider.CreateAsync(accessTokenContext);
+            }
+            
             string accessToken = accessTokenContext.Token;
             if (string.IsNullOrEmpty(accessToken))
             {

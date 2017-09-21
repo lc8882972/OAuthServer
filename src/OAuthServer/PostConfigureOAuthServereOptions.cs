@@ -23,10 +23,25 @@ namespace OAuthServer
         /// <param name="options">The options instance to configure.</param>
         public void PostConfigure(string name, OAuthServerOptions options)
         {
-            var provider = options.DataProtectionProvider ?? _dp;
-            var dataProtector = provider.CreateProtector("OAuthServer.OAuthServerMiddleware", name, "v2");
-            
-            options.TicketDataFormat = new TicketDataFormat(dataProtector);
+            var provider = _dp;
+            IDataProtector dataProtector = null; 
+            if (options.AuthorizationCodeFormat == null)
+            {
+                dataProtector = provider.CreateProtector("OAuth2", "Authentication_Code", "v2");
+                options.AuthorizationCodeFormat = new TicketDataFormat(dataProtector);
+            }
+
+            if (options.AccessTokenFormat == null)
+            {
+                dataProtector = provider.CreateProtector("OAuth2", "Access_Token", "v2");
+                options.AccessTokenFormat = new TicketDataFormat(dataProtector);
+            }
+
+            if (options.RefreshTokenFormat == null)
+            {
+                dataProtector = provider.CreateProtector("OAuth2", "Refresh_Token", "v2");
+                options.RefreshTokenFormat = new TicketDataFormat(dataProtector);
+            }
 
             if (options.Events == null)
             {

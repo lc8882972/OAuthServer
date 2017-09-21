@@ -13,10 +13,8 @@ namespace OAuthServer
             Scope = new List<string>();
             AuthorizationCodeExpireTimeSpan = TimeSpan.FromMinutes(5);
             AccessTokenExpireTimeSpan = TimeSpan.FromDays(7);
-            SystemClock = new SystemClock();
             AllowInsecureHttp = true;
         }
-
         /// <summary> 
         /// Gets or sets the provider-assigned client id. 
         /// </summary> 
@@ -33,17 +31,15 @@ namespace OAuthServer
         /// Gets or sets the URI the middleware will access to exchange the OAuth token.
         /// </summary>
         public PathString TokenEndpoint { get; set; }
-
+        /// <summary>
+        /// True to allow authorize and token requests to arrive on http URI addresses, and to allow incoming 
+        /// redirect_uri authorize request parameter to have http URI addresses.
+        /// </summary>
         public bool AllowInsecureHttp { get; set; }
         /// <summary>
         /// A list of permissions to request.
         /// </summary>
         public IList<string> Scope { get; private set; }
-        /// <summary> 
-        /// Gets or sets the authentication scheme corresponding to the middleware 
-        /// responsible of persisting user's identity after a successful authentication. 
-        /// This value typically corresponds to a cookie middleware registered in the Startup class. 
-        public string SignInScheme { get; set; }
         /// <summary>
         /// Produces a bearer token the client application will typically be providing to resource server as the authorization bearer 
         /// http request header. If not provided the token produced on the server's default data protection. If a different access token
@@ -87,7 +83,6 @@ namespace OAuthServer
         /// </summary>
         public ISecureDataFormat<AuthenticationTicket> AccessTokenFormat { get; set; }
 
-        public ISystemClock SystemClock { get; set; }
         /// <summary>
         /// Produces a refresh token which may be used to produce a new access token when needed. If not provided the authorization server will
         /// not return refresh tokens from the /Token endpoint.
@@ -109,16 +104,5 @@ namespace OAuthServer
         /// See also, http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html
         /// </summary>
         public PathString FormPostEndpoint { get; set; }
-
-        /// <summary>
-        /// Format AuthenticationTicket token
-        /// </summary>
-        public ISecureDataFormat<AuthenticationTicket> TicketDataFormat { get; set; }
-
-        /// <summary> 
-        /// If set this will be used by the OauthServerMiddleware for data protection. 
-        /// </summary> 
-        public IDataProtectionProvider DataProtectionProvider { get; set; }
-
     }
 }

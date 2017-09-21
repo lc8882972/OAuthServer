@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Samples.Middleware;
 using OAuthServer.Events;
+using Samples.Provider;
 
 namespace Samples
 {
@@ -36,29 +37,35 @@ namespace Samples
         // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-
-            // Add framework services.
-            //services.AddApplicationInsightsTelemetry(Configuration);
-            services.AddDataProtection();
-
+            // Add framework services
             services.AddAuthorization();
-            services.AddAuthentication()
-                .AddOAuthServer("OAuth2Server", "OAuth2", option =>
+            
+            services.AddAuthentication(f=> 
+            {
+                f.DefaultAuthenticateScheme = "Bearer";
+                f.DefaultChallengeScheme = "Bearer";
+                f.DefaultForbidScheme = "Bearer";
+            })
+            .AddOAuthServer("OAuth2Server", "OAuth2", option =>
               {
                   OAuthServerEvents events = new OAuthServerEvents();
-
+                  events.OnValidateClientAuthentication = Provider.OAuthRequestEvents.ValidateClientAuthentication;
                   events.OnValidateClientRedirectUri = Provider.OAuthRequestEvents.ValidateClientRedirectUri;
+                  events.OnGrantResourceOwnerCredentials = Provider.OAuthRequestEvents.GrantResourceOwnerCredentials;
                   option.AuthorizationEndpoint = new PathString("/api/oauth/auth");
                   option.TokenEndpoint = new PathString("/api/oauth/token");
                   option.Events = events;
-                  option.SignInScheme = "oauth";
                   option.Scope.Add("name");
                   option.Scope.Add("email");
                   option.AllowInsecureHttp = true;
                   option.ClientId = "smaples";
-              }).AddJwtBearer("OAuth2ServerBearer", "OAuth2", options=> {
-                
+                  option.AccessTokenExpireTimeSpan = TimeSpan.FromDays(7);
+                  option.RefreshTokenProvider = new Provider.RefreshTokenProvider();
+              })
+              .AddOAuthBearer(o=> {
+                  //o.Provider = new OAuthBearerProvider();
               });
+
             services.AddMvcCore()
                .AddAuthorization()
                .AddDataAnnotations()
@@ -75,7 +82,7 @@ namespace Samples
             }
 
             app.UseStaticFiles();
-            app.UseTimeRecorderMiddleware();
+            //app.UseTimeRecorderMiddleware();
 
             app.UseMvc(routes =>
             {

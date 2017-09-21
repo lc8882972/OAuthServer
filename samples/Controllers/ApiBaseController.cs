@@ -9,7 +9,7 @@ using System.Web.Http;
 
 namespace Samples.Controllers
 {
-    public abstract class ApiBaseController : ApiController
+    public abstract class ApiBaseController : Controller
     {
         /// <summary>
         /// 自定义200，不返回data字段
@@ -18,7 +18,7 @@ namespace Samples.Controllers
         public IActionResult CustomOk()
         {
             //this.Context.RequestServices.GetService
-            return Json<Models.ICustomResponseMessage>(new Models.CustomOKResponseMessage());
+            return Json(new Models.CustomOKResponseMessage());
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace Samples.Controllers
         /// <returns>{"code":200,"data":T}</returns>
         public IActionResult CustomData<T>(T value)
         {
-            return Json<Models.ICustomResponseMessage>(new Models.CustomDataResponseMessage<T>() { data = value });
+            return Json(new Models.CustomDataResponseMessage<T>() { data = value });
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Samples.Controllers
         /// <returns>{"code":500,"data":msg}</returns>
         public IActionResult CustomError(string msg)
         {
-            return Json<Models.ICustomResponseMessage>(new Models.CustomErrorResponseMessage(msg));
+            return Json(new Models.CustomErrorResponseMessage(msg));
         }
     }
 }

@@ -20,9 +20,7 @@ namespace Samples.Controllers
             identity.AddClaim(new Claim(ClaimTypes.Name, "guoyan"));
             ClaimsPrincipal principal = new ClaimsPrincipal();
             principal.AddIdentity(identity);
-            Context.Authentication.SignInAsync("SPA", principal);
-            return Ok();
+            return SignIn(principal, "SPA");
         }
-
     }
 }

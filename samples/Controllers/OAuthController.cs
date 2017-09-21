@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using System.Web.Http;
+using Microsoft.AspNetCore.Authentication;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -16,20 +16,11 @@ namespace Samples.Controllers
         [HttpGet("api/oauth/auth")]
         public IActionResult auth()
         {
-            ClaimsIdentity identity = new ClaimsIdentity();
+            ClaimsIdentity identity = new ClaimsIdentity("OAuth2Server");
             identity.AddClaim(new Claim(ClaimTypes.Name, "guoyan"));
             ClaimsPrincipal principal = new ClaimsPrincipal();
             principal.AddIdentity(identity);
-            //Context.SignInAsync("oauthserver", principal);
-
             return SignIn(principal, "OAuth2Server");
-        }
-
-        // GET: /api/ouath/token
-        [HttpGet]
-        public string token()
-        {
-            return "value";
         }
     }
 }
