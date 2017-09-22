@@ -34,7 +34,20 @@ namespace OAuthServerBearer
         /// Creates a new instance of the events instance.
         /// </summary>
         /// <returns>A new instance of the events instance.</returns>
-        protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new OAuthBearerAuthenticationEvents());
+        /// <summary>
+        /// Creates a new instance of the events instance.
+        /// </summary>
+        /// <returns>A new instance of the events instance.</returns>
+        protected override Task<object> CreateEventsAsync()
+        {
+            IOAuthBearerAuthenticationEvents events = null;
+            events = (IOAuthBearerAuthenticationEvents)Context.RequestServices.GetService(typeof(IOAuthBearerAuthenticationEvents));
+            if (events == null)
+            {
+                events = new OAuthBearerAuthenticationEvents();
+            }
+            return Task.FromResult<object>(events);
+        }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {

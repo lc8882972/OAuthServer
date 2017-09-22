@@ -9,7 +9,8 @@
     <PackageTags>OAuth2.0;OAuthServer;AspNetCore</PackageTags>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/lc8882972/OAuthServer.git</RepositoryUrl>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
+    <Company />
     <!--<NetStandardImplicitPackageVersion>2.0</NetStandardImplicitPackageVersion>-->
     <!-- <PackageTargetFallback>$(PackageTargetFallback);dnxcore50;dotnet5.6;portable-net45+win8</PackageTargetFallback> -->
   </PropertyGroup>

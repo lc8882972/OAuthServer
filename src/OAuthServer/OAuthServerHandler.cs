@@ -51,7 +51,16 @@ namespace OAuthServer
         /// Creates a new instance of the events instance.
         /// </summary>
         /// <returns>A new instance of the events instance.</returns>
-        protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new OAuthServerEvents());
+        protected override Task<object> CreateEventsAsync()
+        {
+            IOAuthServerEvents events =null;
+            events =(IOAuthServerEvents)Context.RequestServices.GetService(typeof(IOAuthServerEvents));
+            if (events == null)
+            {
+                events = new OAuthServerEvents();
+            }
+            return Task.FromResult<object>(events);
+        }
 
         /// <summary>
         /// Called after options/events have been initialized for the handler to finish initializing itself.

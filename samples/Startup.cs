@@ -8,9 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Samples.Middleware;
 using OAuthServer.Events;
-using Samples.Provider;
+using Samples.OAuthEvents;
 
 namespace Samples
 {
@@ -39,7 +38,8 @@ namespace Samples
         {
             // Add framework services
             services.AddAuthorization();
-            
+
+            services.AddSingleton<IOAuthServerEvents, SampleOAuth2ServerEvent>();
             services.AddAuthentication(f=> 
             {
                 f.DefaultAuthenticateScheme = "Bearer";
@@ -48,13 +48,8 @@ namespace Samples
             })
             .AddOAuthServer("OAuth2Server", "OAuth2", option =>
               {
-                  OAuthServerEvents events = new OAuthServerEvents();
-                  events.OnValidateClientAuthentication = Provider.OAuthRequestEvents.ValidateClientAuthentication;
-                  events.OnValidateClientRedirectUri = Provider.OAuthRequestEvents.ValidateClientRedirectUri;
-                  events.OnGrantResourceOwnerCredentials = Provider.OAuthRequestEvents.GrantResourceOwnerCredentials;
                   option.AuthorizationEndpoint = new PathString("/api/oauth/auth");
                   option.TokenEndpoint = new PathString("/api/oauth/token");
-                  option.Events = events;
                   option.Scope.Add("name");
                   option.Scope.Add("email");
                   option.AllowInsecureHttp = true;

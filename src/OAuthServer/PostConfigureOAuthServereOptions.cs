@@ -42,11 +42,6 @@ namespace OAuthServer
                 dataProtector = provider.CreateProtector("OAuth2", "Refresh_Token", "v2");
                 options.RefreshTokenFormat = new TicketDataFormat(dataProtector);
             }
-
-            if (options.Events == null)
-            {
-                options.Events = new OAuthServer.Events.OAuthServerEvents();
-            }
         }
     }
 }

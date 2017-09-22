@@ -2,9 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <Description>OAuth2.0 Bearer</Description>
+    <Company />
+    <Authors>yAn</Authors>
+    <Product>OAuth2Bearer</Product>
+    <PackageId>OAuthServerBearer</PackageId>
+    <PackageProjectUrl>https://github.com/lc8882972/OAuthServer</PackageProjectUrl>
+    <PackageTags>aspnetcore,OAuth2.0</PackageTags>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
